@@ -18,6 +18,44 @@
       </article>
     </div>
 
+    <section class="return-pack">
+      <h3>外业回传包</h3>
+      <p class="pack-note">
+        勾选测点后下载采集文件（含坐标系、观测方向、上次累积量），现场补录倾斜角度与观测人后上传。
+        平台逐条校验，整包一次写入或全部退回；同一测点重复上传时保留已校核版本、未校核记录以最新原始记录为准；
+        已归档记录不能被文件覆盖；缺失观测方向的旧数据按「未标注」处理。回传成功后监测设备页会新增传感器校时任务。
+      </p>
+      <div class="pack-points">
+        <label
+          v-for="point in pointOptions"
+          :key="point.key"
+          class="pack-point"
+          :class="{ disabled: point.archived }"
+        >
+          <input
+            v-model="selectedPoints"
+            type="checkbox"
+            :value="point.key"
+            :disabled="point.archived"
+          />
+          {{ point.point }} · {{ point.direction }}（上次累积 {{ point.baseline }}）
+          <template v-if="point.archived">· 已归档</template>
+        </label>
+        <span v-if="!pointOptions.length" class="empty-state">暂无测点，请先登记倾斜记录</span>
+      </div>
+      <div class="pack-actions">
+        <button class="btn" type="button" @click="downloadPack">下载采集文件</button>
+        <label class="btn upload-btn">
+          上传回传文件
+          <input type="file" accept=".csv,text/csv" hidden @change="uploadPack" />
+        </label>
+      </div>
+      <p v-if="packMessage" class="pack-message" :class="{ error: !packOk }">{{ packMessage }}</p>
+      <ul v-if="packErrors.length" class="pack-errors">
+        <li v-for="error in packErrors" :key="error">{{ error }}</li>
+      </ul>
+    </section>
+
     <p class="status-legend">
       <span v-for="item in statusSummary" :key="item.status" class="legend-item">
         {{ item.status }}：{{ item.count }}
@@ -43,7 +81,7 @@
       </thead>
       <tbody>
         <tr v-for="row in rows" :key="String(row.id)">
-          <td v-for="column in columns" :key="column">{{ row[column] ?? '—' }}</td>
+          <td v-for="column in columns" :key="column">{{ displayCell(row, column) }}</td>
           <td>{{ row.status }}</td>
           <td class="row-actions">
             <button
@@ -74,6 +112,13 @@
 import { computed, onMounted, ref } from 'vue'
 
 import {
+  downloadCollectionFile,
+  listTiltPoints,
+  uploadCollectionFile,
+  UNMARKED_DIRECTION,
+} from '@/api/field-return'
+import type { TiltPointOption } from '@/api/field-return'
+import {
   downloadEntries,
   listEntries,
   moduleMeta,
@@ -83,8 +128,8 @@ import type { EntryRow } from '@/data/types'
 
 const meta = moduleMeta('tilt')
 const columns = ["记录编号", "测点编号", "观测方向", "倾斜角度", "变化量", "累积倾斜量", "观测人", "记录状态"]
-const actions = ["提交校核", "确认校核", "触发报警"]
-const statuses = ["已观测", "待校核", "已校核", "超限报警", "需复测"]
+const actions = ["提交校核", "确认校核", "触发报警", "归档记录"]
+const statuses = ["已观测", "待校核", "已校核", "超限报警", "需复测", "已归档"]
 const stats = [{"label": "本月观测数", "value": 0}, {"label": "超限报警数", "value": 0}, {"label": "待校核数", "value": 0}]
 
 const rows = ref<EntryRow[]>([])
@@ -98,6 +143,52 @@ const statusSummary = computed(() =>
     count: rows.value.filter((row) => String(row.status) === status).length,
   })),
 )
+
+const pointOptions = ref<TiltPointOption[]>([])
+const selectedPoints = ref<string[]>([])
+const packMessage = ref('')
+const packErrors = ref<string[]>([])
+const packOk = ref(true)
+
+// 缺失观测方向的旧数据在表格里也按「未标注」展示
+function displayCell(row: EntryRow, column: string): string | number {
+  const value = row[column]
+  if (column === '观测方向' && String(value ?? '').trim() === '') {
+    return UNMARKED_DIRECTION
+  }
+  return (value ?? '—') as string | number
+}
+
+function refreshPoints() {
+  pointOptions.value = listTiltPoints()
+}
+
+function downloadPack() {
+  packErrors.value = []
+  if (!selectedPoints.value.length) {
+    packOk.value = false
+    packMessage.value = '请先勾选要下载采集文件的测点'
+    return
+  }
+  const filename = downloadCollectionFile(selectedPoints.value)
+  packOk.value = true
+  packMessage.value = `已下载 ${filename}，请现场补录倾斜角度与观测人后再上传`
+}
+
+async function uploadPack(event: Event) {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) {
+    return
+  }
+  const content = await file.text()
+  const result = uploadCollectionFile(content)
+  packOk.value = result.ok
+  packMessage.value = result.message
+  packErrors.value = result.errors
+  input.value = ''
+  reload()
+}
 
 function resetFilters() {
   filters.value = {}
@@ -128,6 +219,7 @@ function reload() {
     const payload = listEntries(meta.key, filters.value)
     rows.value = payload.items
     total.value = payload.total
+    refreshPoints()
   } catch (error) {
     errorMessage.value = error instanceof Error ? error.message : '倾斜监测列表读取失败'
   }

@@ -48,6 +48,15 @@ export function saveRows(key: string, rows: EntryRow[]): void {
   }
 }
 
+// 整包提交：所有键拼成一份快照，一次 setItem 落盘。
+// setItem 抛错（如超配额）时 cache 不更新，等于整包没写入，保证「一次成功或全部退回」。
+export function commitAll(next: Record<string, EntryRow[]>): void {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+  }
+  cache = next
+}
+
 export function resetRows(key: string): EntryRow[] {
   const rows = clone(SEED_ROWS[key] ?? [])
   saveRows(key, rows)

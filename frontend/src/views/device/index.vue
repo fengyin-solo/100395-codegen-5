@@ -67,12 +67,56 @@
       <span>共 {{ total }} 条监测设备记录</span>
       <span v-if="errorMessage" class="error-text">{{ errorMessage }}</span>
     </footer>
+
+    <section class="timecal-section">
+      <h3>传感器校时任务</h3>
+      <p class="page-desc">倾斜监测外业回传成功后自动生成，完成现场校时后在此销号。</p>
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>任务编号</th>
+            <th>测点编号</th>
+            <th>任务来源</th>
+            <th>回传批次</th>
+            <th>创建时间</th>
+            <th>当前状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-for="task in timecalTasks" :key="String(task.id)">
+            <td>{{ task['任务编号'] }}</td>
+            <td>{{ task['测点编号'] }}</td>
+            <td>{{ task['任务来源'] }}</td>
+            <td>{{ task['回传批次'] }}</td>
+            <td>{{ task['创建时间'] }}</td>
+            <td>{{ task.status }}</td>
+            <td>
+              <button
+                v-if="task.status === '待校时'"
+                class="link"
+                type="button"
+                @click="completeTask(task)"
+              >
+                完成校时
+              </button>
+              <span v-else>—</span>
+            </td>
+          </tr>
+          <tr v-if="!timecalTasks.length">
+            <td colspan="7" class="empty-state">暂无校时任务，倾斜监测外业回传成功后会自动生成</td>
+          </tr>
+        </tbody>
+      </table>
+      <p v-if="timecalMessage" class="timecal-message">{{ timecalMessage }}</p>
+    </section>
   </section>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 
+import { completeTimecalTask, listTimecalTasks } from '@/api/field-return'
 import {
   downloadEntries,
   listEntries,
@@ -92,6 +136,20 @@ const total = ref(0)
 const errorMessage = ref('')
 const filters = ref<Record<string, string>>({})
 const filterFields = columns.slice(0, 3)
+const timecalTasks = ref<EntryRow[]>([])
+const timecalMessage = ref('')
+
+function refreshTimecal() {
+  timecalTasks.value = listTimecalTasks()
+}
+
+function completeTask(task: EntryRow) {
+  const result = completeTimecalTask(Number(task.id))
+  timecalMessage.value = result.message
+  if (result.ok) {
+    refreshTimecal()
+  }
+}
 const statusSummary = computed(() =>
   statuses.map((status: string) => ({
     status,
@@ -133,5 +191,8 @@ function reload() {
   }
 }
 
-onMounted(reload)
+onMounted(() => {
+  reload()
+  refreshTimecal()
+})
 </script>

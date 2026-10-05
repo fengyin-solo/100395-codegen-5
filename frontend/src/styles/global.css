@@ -35,3 +35,16 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+.return-pack { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; margin-bottom: 12px; }
+.return-pack h3, .timecal-section h3 { margin: 0 0 6px; font-size: 14px; }
+.pack-note { color: var(--muted); font-size: 12px; margin: 0 0 10px; }
+.pack-points { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-bottom: 10px; }
+.pack-point { font-size: 13px; display: flex; align-items: center; gap: 4px; }
+.pack-point.disabled { color: var(--muted); }
+.pack-actions { display: flex; gap: 10px; }
+.upload-btn { display: inline-flex; align-items: center; cursor: pointer; }
+.pack-message { font-size: 13px; margin: 8px 0 0; }
+.pack-message.error { color: #b42318; }
+.pack-errors { margin: 6px 0 0; padding-left: 18px; font-size: 12px; color: #b42318; }
+.timecal-section { margin-top: 16px; }
+.timecal-message { font-size: 12px; color: var(--muted); margin: 6px 0 0; }
