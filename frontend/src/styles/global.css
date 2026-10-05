@@ -35,3 +35,25 @@ body { margin: 0; background: #f6f8fb; color: #1f2937; }
 .error-text { color: #b42318; }
 .status-legend { display: flex; flex-wrap: wrap; gap: 12px; margin: 0 0 10px; font-size: 12px; color: var(--muted); }
 .legend-item { background: #eef2f7; border-radius: 999px; padding: 2px 10px; }
+
+/* 外业回传包面板 */
+.backhaul-panel { background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 12px 16px; margin-bottom: 14px; }
+.panel-title { margin: 0 0 8px; font-size: 15px; }
+.rule-list { margin: 0 0 12px; padding-left: 18px; color: var(--muted); font-size: 12px; line-height: 1.8; }
+.backhaul-controls { display: flex; flex-wrap: wrap; gap: 12px; align-items: flex-end; }
+.backhaul-controls select { border: 1px solid var(--border); border-radius: 6px; padding: 6px 8px; min-width: 240px; }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.upload-hint { display: flex; align-items: center; gap: 8px; }
+.upload-btn { display: inline-flex; align-items: center; cursor: pointer; }
+.upload-name { font-size: 12px; color: var(--muted); }
+.backhaul-result { margin-top: 12px; border-radius: 6px; padding: 10px 12px; border: 1px solid var(--border); background: #fbfdff; }
+.backhaul-result.is-ok { border-color: #86c9a4; background: #f2fbf6; }
+.backhaul-result.is-fail { border-color: #e0928c; background: #fdf5f4; }
+.result-head { display: flex; justify-content: space-between; gap: 12px; font-size: 13px; flex-wrap: wrap; }
+.result-summary { margin: 6px 0; font-size: 13px; }
+.sync-task { margin: 6px 0; padding-left: 18px; font-size: 13px; color: #17663b; }
+.sync-task.muted { color: var(--muted); }
+.error-list { margin: 6px 0; padding-left: 18px; font-size: 13px; }
+.check-table { margin-top: 8px; font-size: 12px; }
+.check-table th, .check-table td { padding: 5px 8px; }
+.check-table tr.row-fail { background: #fdecea; }

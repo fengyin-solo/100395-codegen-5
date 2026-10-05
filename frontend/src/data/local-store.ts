@@ -41,11 +41,18 @@ export function listRows(key: string): EntryRow[] {
 }
 
 export function saveRows(key: string, rows: EntryRow[]): void {
-  const next = { ...allRows(), [key]: rows }
-  cache = next
+  commitAll({ [key]: rows })
+}
+
+// 跨模块原子提交：外业回传包要在一次写入里同时落倾斜记录和设备校时任务，
+// 要么整包成功，要么全部退回——先在内存里拼好整份数据，再只做一次持久化。
+export function commitAll(patch: Record<string, EntryRow[]>): void {
+  const next = { ...allRows(), ...patch }
+  const serialized = JSON.stringify(next)
   if (typeof window !== 'undefined' && window.localStorage) {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(next))
+    window.localStorage.setItem(STORAGE_KEY, serialized)
   }
+  cache = next
 }
 
 export function resetRows(key: string): EntryRow[] {
